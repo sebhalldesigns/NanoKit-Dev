@@ -1,0 +1,5 @@
+<Window Title="MainWindow" Height="800" Width="600">
+	
+    <Button Click="ButtonClickFunction">Click me</Button>
+    
+</Window>
