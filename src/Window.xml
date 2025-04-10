@@ -1,5 +1,9 @@
-<Window Title="MainWindow" Height="800" Width="600">
-	
-    <Button Click="ButtonClickFunction">Click me</Button>
-    
-</Window>
+<Window Title="WINDOW GENERATED FROM XML on both windows and linux" Height="800" Width="1000">
+    <DockPanel>
+        <Button DockPanel.Dock="Top" Content="Top" />
+        <Button DockPanel.Dock="Bottom" Content="Bottom" />
+        <Button DockPanel.Dock="Left" Content="Left" />
+        <Button DockPanel.Dock="Right" Content="Right" />
+        <Button Content="Center" />
+    </DockPanel>
+</Window>               

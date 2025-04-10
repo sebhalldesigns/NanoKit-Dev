@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.17)
 
 project(NanoKit-Dev)
 
@@ -12,7 +12,6 @@ add_executable(NanoKit-Dev
 
 target_link_libraries(NanoKit-Dev 
     NanoKit-Extern
-    NanoKit-PAL
     NanoKit
 )
 
@@ -26,4 +25,5 @@ target_include_directories(NanoKit-Dev PUBLIC
     ${CMAKE_BINARY_DIR}/generated
 )
 
-generate_html()
+
+#generate_html()

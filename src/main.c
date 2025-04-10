@@ -1,15 +1,24 @@
 #include <stdio.h>
 
 #include <Window.xml.h>
+#include <SecondWindow.xml.h>
+
+#include <NanoKit.h>
+
+void AppLaunched(void *app)
+{
+    printf("App launched\n");
+}
 
 int main()
 {   
-    WINDOW_Init();
+    nkWindow* window = Window_Create();
+    nkWindow* secondWindow = SecondWindow_Create();
 
     printf("Hello World\n"); 
-        
-    WINDOW_Destroy();
 
+    RunApp(NULL);
+ 
     return 0;
 
 }              
