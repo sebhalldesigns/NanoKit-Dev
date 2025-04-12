@@ -3,7 +3,7 @@
 #include <Window.xml.h>
 #include <SecondWindow.xml.h>
 
-#include <NanoKit.h>
+#include "../NanoKit/lib/kit/NanoKit.h"
 
 void AppLaunched(void *app)
 {
@@ -17,7 +17,7 @@ int main()
 
     printf("Hello World\n"); 
 
-    RunApp(NULL);
+    RunApp(AppLaunched);
  
     return 0;
 
