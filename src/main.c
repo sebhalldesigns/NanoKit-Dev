@@ -1,9 +1,12 @@
 #include <stdio.h>
 
+#include <windows.h>
+
 #include <Window.xml.h>
 #include <SecondWindow.xml.h>
 
 #include <stdlib.h>
+
 
 #include "../NanoKit/lib/kit/NanoKit.h"
 
@@ -13,7 +16,7 @@ void AppLaunched()
 
 }
 
-int main()
+int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {   
     nkWindow* window = Window_Create();
 
@@ -23,14 +26,14 @@ int main()
     dockPanel->View->BackgroundColor = COLOR_MAGENTA;
 
     /* create many dockpanel views */
-    for (int i = 0; i < 5000; i++)
+    for (int i = 0; i < 1000; i++)
     {
         nkView* view = CreateView();
 
         nkColor randomColors[] = {COLOR_RED, COLOR_GREEN, COLOR_BLUE, COLOR_YELLOW, COLOR_CYAN};
         view->BackgroundColor = randomColors[rand() % 5];
 
-        view->SizeRequest = (nkSize){0.1, 0.1};
+        view->SizeRequest = (nkSize){1, 1};
         
         switch (i % 4)
         {

@@ -76,7 +76,7 @@ elseif(APPLE)
 
 else()
 
-    add_executable(NanoKit-Dev 
+    add_executable(NanoKit-Dev WIN32
         src/main.c
     )
 
