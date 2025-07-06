@@ -1,6 +1,10 @@
 #include <stdio.h>
 #include <math.h>
+#include <stdlib.h>
+
 #include <nanowin.h>
+
+#include <views/nkdockview/nkdockview.h>
 
 static uint8_t atlas_buffer[512 * 512];
 static nkFont_t font;
@@ -13,18 +17,29 @@ static float fps = 0.0f;
 
 static char fpsText[64];
 
+extern const uint8_t NKFonts_fonts_Roboto_Regular_ttf[];
+extern const size_t NKFonts_fonts_Roboto_Regular_ttf_size;
 
 void PointerMoveCallback(nkWindow_t *window, float x, float y)
 {
     pointerX = x;
     pointerY = y;
 
-    nkWindow_RequestRedraw(window);
+    //nkWindow_RequestRedraw(window);
 }   
 
 void WindowResizeCallback(nkWindow_t *window, float width, float height)
 {
-    printf("Window '%s' resized to %.2f x %.2f\n", window->Title, width, height);
+    //printf("Window '%s' resized to %.2f x %.2f\n", window->Title, width, height);
+
+    QueryPerformanceCounter(&start);
+
+    nkWindow_LayoutViews(window); // Layout the views in the window after resizing
+
+    QueryPerformanceCounter(&end);
+
+    double elapsedMs = (double)(end.QuadPart - start.QuadPart) * 1000.0 / frequency.QuadPart;
+    printf("Layout took %.3f ms\n", elapsedMs);
 }
 
 void WindowCodepointInputCallback(nkWindow_t *window, uint32_t codepoint)
@@ -68,35 +83,41 @@ void WindowDrawCallback(nkWindow_t *window)
 
     QueryPerformanceCounter(&start);
 
-    nkDraw_Begin(&window->DrawContext, window->Width, window->Height);
-    nkDraw_SetColor(&window->DrawContext, (nkVector4_t){0.0f, 0.0f, 0.0f, 1.0f});
+    nkDraw_Begin(&window->drawContext, window->width, window->height);
+
+    nkWindow_RedrawViews(window); // Redraw the views in the window
+
+
+    #if 0
+    nkDraw_SetColor(&window->drawContext, (nkVector4_t){0.0f, 0.0f, 0.0f, 1.0f});
 
     float width = 100.0f;
     float height = 20.0f;
 
     size_t renderCount = 0;
 
-    for (float x = 0.0f; x < window->Width; x += width)
+    for (float x = 0.0f; x < window->width; x += width)
     {
-        for (float y = 0.0f; y < window->Height; y += height)
+        for (float y = 0.0f; y < window->height; y += height)
         {
             // Draw a rectangle
-            nkDraw_SetColor(&window->DrawContext, (nkVector4_t){0.9f, 0.9f, 0.9f, 1.0f}); // Light grey
-            nkDraw_Rect(&window->DrawContext, x + 2.5f, y + 2.5f, width - 5.0f, height - 5.0f);
+            nkDraw_SetColor(&window->drawContext, NK_COLOR_MAGENTA); // Light grey
+            nkDraw_Rect(&window->drawContext, x + 2.5f, y + 2.5f, width - 5.0f, height - 5.0f);
             renderCount++;
 
-            nkDraw_SetColor(&window->DrawContext, (nkVector4_t){0.0f, 0.0f, 0.0f, 1.0f});
-            nkDraw_Text(&window->DrawContext, &font, title, x, y + 10.0f);
+            nkDraw_SetColor(&window->drawContext, NK_COLOR_WHITE);
+            nkDraw_Text(&window->drawContext, &font, title, x, y + 10.0f);
             renderCount++;
         }
     }
+    #endif
 
-    nkDraw_End(&window->DrawContext);
+    nkDraw_End(&window->drawContext);
 
     QueryPerformanceCounter(&end);
 
-    double elapsedMicroseconds = (double)(end.QuadPart - start.QuadPart) * 1000000.0 / frequency.QuadPart;
-    //printf("Drawing took %.2f microseconds for %zu labels\n", elapsedMicroseconds, renderCount);
+    double elapsedMs = (double)(end.QuadPart - start.QuadPart) * 1000.0 / frequency.QuadPart;
+    printf("Drawing took %.2f ms\n", elapsedMs);
 
     /* calculate FPS */
     if (lastStart.QuadPart == 0)
@@ -123,32 +144,75 @@ void WindowDrawCallback(nkWindow_t *window)
         timeAccumulator = 0.0; // Reset accumulator
     }
 
+
 }   
 
 nkWindow_t window = {0};
 
+nkView_t views[10000] = {0}; // Array to hold views
 
+
+//DWORD WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 int main()
 {
     // Print a message to indicate the program is running
     printf("Hello, NanoKit!\n");
 
 
-    window.ResizeCallback = (nkWindowResizeCallback_t)WindowResizeCallback;
-    window.CodepointInputCallback = (nkWindowCodepointInputCallback_t)WindowCodepointInputCallback;
-    window.DrawCallback = (nkWindowDrawCallback_t)WindowDrawCallback;
-    window.PointerMoveCallback = (nkWindowPointerMoveCallback_t)PointerMoveCallback;
+    window.resizeCallback = (nkWindowResizeCallback_t)WindowResizeCallback;
+    window.codepointInputCallback = (nkWindowCodepointInputCallback_t)WindowCodepointInputCallback;
+    window.drawCallback = (nkWindowDrawCallback_t)WindowDrawCallback;
+    window.pointerMoveCallback = (nkWindowPointerMoveCallback_t)PointerMoveCallback;
     nkWindow_Create(&window, "My Window", 800, 600);
 
-    nkFont_Load(&font, "build/Roboto-Regular.ttf", 16.0f, atlas_buffer, 512, 512);
+    nkDockView_t dockView  = {0};
+    nkDockView_Create(&dockView);
+
+    window.rootView = (nkView_t *)&dockView.view; // Set the root view to the dock view
+    
+    dockView.view.backgroundColor = NK_COLOR_LIGHT_GRAY; // Set the background color of the dock view
+
+     /* create many dockpanel views */
+    for (int i = 0; i < 10000; i++)
+    {
+        nkView_t* view = &views[i];
+        nkView_Create(view, "DockPanel View");
+
+        nkColor_t randomColors[] = {NK_COLOR_RED, NK_COLOR_GREEN, NK_COLOR_BLUE, NK_COLOR_YELLOW, NK_COLOR_CYAN};
+        view->backgroundColor = randomColors[rand() % 5];
+
+        view->sizeRequest = (nkSize_t){0.1, 0.1};
+        
+        switch (i % 4)
+        {
+            case 0:
+                view->dockPosition = DOCK_POSITION_TOP;
+                break;
+            case 1:
+                view->dockPosition = DOCK_POSITION_BOTTOM;
+                break;
+            case 2:
+                view->dockPosition = DOCK_POSITION_LEFT;
+                break;
+            case 3:
+                view->dockPosition = DOCK_POSITION_RIGHT;
+                break;
+        }
+
+        nkView_AddChildView(&dockView.view, view);
+    }
+
+
+
+    //nkFont_Load(&font, "build/Roboto-Regular.ttf", 16.0f, atlas_buffer, 512, 512);
+    nkFont_LoadFromMemory(&font, NKFonts_fonts_Roboto_Regular_ttf, NKFonts_fonts_Roboto_Regular_ttf_size, 16.0f, atlas_buffer, 512, 512);
 
     QueryPerformanceFrequency(&frequency);
 
 
     while (nkWindow_PollEvents())
     {
-        
-        nkWindow_RequestRedraw(&window); // Request a redraw for the window
+        //nkWindow_RequestRedraw(&window); // Request a redraw for the window
     }
 
     return 0;
