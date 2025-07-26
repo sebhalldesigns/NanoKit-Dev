@@ -8,18 +8,36 @@ include(${NKGEN_CMAKE})
 
 project(NanoKit-Dev)
 
-add_executable(NanoKit-Dev
+if (NOT EMSCRIPTEN)
+    set(EXE_NAME ${CMAKE_PROJECT_NAME})
+else()
+    set(CMAKE_EXECUTABLE_SUFFIX ".html")
+
+    set(SHELL_FILE ${CMAKE_SOURCE_DIR}/shell.html)
+
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} \
+        -s USE_WEBGL2=1 \
+        -s FULL_ES3=1 \
+        -s ALLOW_MEMORY_GROWTH=1 \
+        -g \
+        -gsource-map \
+        --shell-file ${SHELL_FILE} \
+    ")
+
+    set(EXE_NAME "index")
+endif()
+
+add_executable(${EXE_NAME}
     src/main.c
 )
 
-target_link_libraries(NanoKit-Dev PUBLIC
+target_link_libraries(${EXE_NAME} PUBLIC
     NanoKit
 )
 
-target_include_directories(NanoKit-Dev PUBLIC
+target_include_directories(${EXE_NAME} PUBLIC
 
 )
-
 
 #generate_modules(NanoKit-Dev
 #    src/SecondWindow
