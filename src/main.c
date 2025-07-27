@@ -35,7 +35,9 @@ void WindowResizeCallback(nkWindow_t *window, float width, float height)
 {
     //printf("Window '%s' resized to %.2f x %.2f\n", window->title, width, height);
 
-    //QueryPerformanceCounter(&start);
+    #if _WIN32
+        QueryPerformanceCounter(&start); 
+    #endif
 
      #if __EMSCRIPTEN__
         double startTime = emscripten_get_now();
@@ -43,10 +45,11 @@ void WindowResizeCallback(nkWindow_t *window, float width, float height)
 
     nkWindow_LayoutViews(window); // Layout the views in the window after resizing
 
-    //QueryPerformanceCounter(&end);
-
-    //double elapsedMs = (double)(end.QuadPart - start.QuadPart) * 1000.0 / frequency.QuadPart;
-    //printf("Layout took %.3f ms\n", elapsedMs);
+    #if _WIN32
+        QueryPerformanceCounter(&end);
+        double elapsedMs = (double)(end.QuadPart - start.QuadPart) * 1000.0 / frequency.QuadPart;
+        printf("Layout took %.2f ms\n", elapsedMs);
+    #endif
 
      #if __EMSCRIPTEN__
         double endTime = emscripten_get_now();
@@ -104,36 +107,7 @@ void WindowDrawCallback(nkWindow_t *window)
 
     nkDraw_Begin(&window->drawContext, window->width, window->height);
 
-    //nkWindow_RedrawViews(window); // Redraw the views in the window
-
-
-    
-    nkDraw_SetColor(&window->drawContext, (nkVector4_t){0.0f, 0.0f, 0.0f, 1.0f});
-
-    float width = 100.0f;
-    float height = 20.0f;
-
-    size_t renderCount = 0;
-
-    for (float x = 0.0f; x < window->width; x += width)
-    {
-        for (float y = 0.0f; y < window->height; y += height)
-        {
-            // Draw a rectangle
-            nkDraw_SetColor(&window->drawContext, NK_COLOR_MAGENTA); // Light grey
-            nkDraw_Rect(&window->drawContext, x + 2.5f, y + 2.5f, width - 5.0f, height - 5.0f);
-            renderCount++;
-
-            nkDraw_SetColor(&window->drawContext, NK_COLOR_WHITE);
-            nkDraw_Text(&window->drawContext, &font, title, x, y + 10.0f);
-            renderCount++;
-        }
-    }
-  
-
-    nkDraw_SetColor(&window->drawContext, NK_COLOR_WHITE); // Orange
-    nkDraw_Rect(&window->drawContext, 0.0f, pointerY - 2.0f, window->width, 4.0f);
-    nkDraw_Rect(&window->drawContext, pointerX - 2.0f, 0.0f, 4.0f, window->height);
+    nkWindow_RedrawViews(window); // Redraw the views in the window
 
     nkDraw_End(&window->drawContext);
 
@@ -141,7 +115,7 @@ void WindowDrawCallback(nkWindow_t *window)
         QueryPerformanceCounter(&end);
 
         double elapsedMs = (double)(end.QuadPart - start.QuadPart) * 1000.0 / frequency.QuadPart;
-        printf("Drawing took %.2f ms\n", elapsedMs);
+        //printf("Drawing took %.2f ms\n", elapsedMs);
 
         /* calculate FPS */
         if (lastStart.QuadPart == 0)
@@ -179,11 +153,64 @@ void WindowDrawCallback(nkWindow_t *window)
 
 }   
 
+void PointerMove(nkView_t *window, float x, float y)
+{
+    //printf("Pointer moved to (%.2f, %.2f)\n", x, y);
+}
+
+void HoverCallback(nkView_t *view, nkPointerHover_t hover)
+{
+    static nkColor_t prevColor;
+
+    if (hover == HOVER_END)
+    {
+        view->backgroundColor = prevColor;
+    }
+    else if (hover == HOVER_BEGIN)
+    {
+        prevColor = view->backgroundColor; // Store previous color
+        view->backgroundColor = NK_COLOR_ORANGE; // Change background color on hover
+    }
+}
+
+void PointerActionCallback(nkView_t *view, nkPointerAction_t action, nkPointerEvent_t event, float x, float y)
+{
+    printf("Pointer action: %d, event: %d at (%.2f, %.2f)\n", action, event, x, y);
+
+    static nkPoint_t actionOrigin = {0.0f, 0.0f};
+    static nkPoint_t viewOrigin = {0.0f, 0.0f}; // Store the origin of the action
+
+    switch (event)
+    {
+        case POINTER_EVENT_BEGIN:
+        {
+            actionOrigin = (nkPoint_t){x, y}; // Store the origin of the action
+            viewOrigin = (nkPoint_t){view->frame.x, view->frame.y}; // Store the origin of the view
+        } break;
+
+        case POINTER_EVENT_DRAG:
+        {
+            // Calculate the new position based on the action origin and view origin
+            float newX = x - actionOrigin.x + viewOrigin.x;
+            float newY = y - actionOrigin.y + viewOrigin.y;
+
+            // Update the view's frame position
+            view->frame.x = newX;
+            view->frame.y = newY;
+
+            printf("Dragging view to (%.2f, %.2f)\n", newX, newY);
+        } break;
+    }
+}
+
 nkWindow_t window = {0};
 
-nkView_t views[1000] = {0}; // Array to hold views
+nkView_t views[10000] = {0}; // Array to hold views
 
 nkDockView_t dockView  = {0};
+
+nkView_t newRootView = {0}; // New root view for testing
+nkView_t secondView = {0}; // Second view for testing
 
 
 /* IMPORTANT: ON WEB, MAKE SURE NOTHING IS LOCAL TO THE MAIN FUNCTION AS IT IS TEMPORARY */
@@ -209,16 +236,18 @@ int main()
     
     dockView.view.backgroundColor = NK_COLOR_LIGHT_GRAY; // Set the background color of the dock view
 
+    #if 0
+
      /* create many dockpanel views */
-    for (int i = 0; i < 1000; i++)
+    for (int i = 0; i < 10000; i++)
     {
         nkView_t* view = &views[i];
         nkView_Create(view, "DockPanel View");
 
         nkColor_t randomColors[] = {NK_COLOR_RED, NK_COLOR_GREEN, NK_COLOR_BLUE, NK_COLOR_YELLOW, NK_COLOR_CYAN};
-        view->backgroundColor = randomColors[rand() % 5];
+        view->backgroundColor = NK_COLOR_GREEN;//randomColors[rand() % 5];
 
-        view->sizeRequest = (nkSize_t){0.1, 0.1};
+        view->sizeRequest = (nkSize_t){1.0, 1.0};
         view->arrangeCallback = NULL;
         
         switch (i % 4)
@@ -237,9 +266,42 @@ int main()
                 break;
         }
 
+        view->capturePointerHover = true; // Enable pointer hover capture
+        view->pointerHoverCallback = HoverCallback; // Set the hover callback
+
         nkView_AddChildView(&dockView.view, view);
     }
 
+    size_t lastView = sizeof views / sizeof(views[0]) - 1;
+
+    views[lastView].pointerMovementCallback = PointerMove; // Set the pointer movement callback for the last view
+    views[lastView].capturePointerMovement = true; // Enable pointer movement capture for the last view
+
+    #endif
+
+    nkView_Create(&newRootView, "New Root View");
+    newRootView.backgroundColor = NK_COLOR_GREEN;
+    window.rootView = &newRootView; // Set the root view to the second view
+
+
+
+    nkView_Create(&secondView, "Second View");
+    secondView.backgroundColor = NK_COLOR_BLUE;
+    secondView.frame = (nkRect_t){10.0f, 10.0f, 200.0f, 200.0f}; // Set the frame of the second view
+    secondView.capturePointerHover = true; // Enable pointer hover capture for the second view
+    secondView.pointerHoverCallback = HoverCallback; // Set the hover callback for the second view
+    secondView.capturePointerAction = true; // Enable pointer action capture for the second view
+    secondView.pointerActionCallback = (PointerActionCallback_t)PointerActionCallback; // Set the pointer action callback for the
+
+    printf("Pointer action callback: %p\n", secondView.pointerActionCallback);
+
+    printf("SECOND VIEW: %p\n", &secondView);
+
+    nkView_AddChildView(&newRootView, &secondView); // Add the second view to the new root view
+
+
+    //views[lastView].pointerHoverCallback = HoverCallback; // Set the hover callback for the last view
+    //views[lastView].capturePointerHover = true; // Enable pointer hover capture for the last
 
 
     //nkFont_Load(&font, "build/Roboto-Regular.ttf", 16.0f, atlas_buffer, 512, 512);
