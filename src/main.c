@@ -5,6 +5,8 @@
 #include <nanowin.h>
 
 #include <views/nkdockview/nkdockview.h>
+#include <views/nkbutton/nkbutton.h>
+#include <views/nklabel/nklabel.h>
 
 static uint8_t atlas_buffer[512 * 512];
 static nkFont_t font;
@@ -48,7 +50,7 @@ void WindowResizeCallback(nkWindow_t *window, float width, float height)
     #if _WIN32
         QueryPerformanceCounter(&end);
         double elapsedMs = (double)(end.QuadPart - start.QuadPart) * 1000.0 / frequency.QuadPart;
-        printf("Layout took %.2f ms\n", elapsedMs);
+        //printf("Layout took %.2f ms\n", elapsedMs);
     #endif
 
      #if __EMSCRIPTEN__
@@ -175,8 +177,6 @@ void HoverCallback(nkView_t *view, nkPointerHover_t hover)
 
 void PointerActionCallback(nkView_t *view, nkPointerAction_t action, nkPointerEvent_t event, float x, float y)
 {
-    printf("Pointer action: %d, event: %d at (%.2f, %.2f)\n", action, event, x, y);
-
     static nkPoint_t actionOrigin = {0.0f, 0.0f};
     static nkPoint_t viewOrigin = {0.0f, 0.0f}; // Store the origin of the action
 
@@ -197,8 +197,6 @@ void PointerActionCallback(nkView_t *view, nkPointerAction_t action, nkPointerEv
             // Update the view's frame position
             view->frame.x = newX;
             view->frame.y = newY;
-
-            printf("Dragging view to (%.2f, %.2f)\n", newX, newY);
         } break;
     }
 }
@@ -208,9 +206,38 @@ nkWindow_t window = {0};
 nkView_t views[10000] = {0}; // Array to hold views
 
 nkDockView_t dockView  = {0};
+nkDockView_t topDockView = {0}; // Top dock view for testing
+nkView_t topPadding = {0}; // Padding view for testing
 
-nkView_t newRootView = {0}; // New root view for testing
 nkView_t secondView = {0}; // Second view for testing
+nkView_t thirdView = {0}; // New root view for testing
+
+nkButton_t button = {0}; // Button for testing
+nkButton_t button2 = {0}; // Button for testing
+
+nkLabel_t label = {0}; // Label for testing
+
+char labelText[128] = "Button clicked: 0 times";
+
+static int clickCount = 0;
+
+void ButtonClick(nkButton_t *button)
+{
+    printf("Button clicked: %s\n", button->text);
+
+    clickCount++;
+
+    snprintf(labelText, sizeof(labelText), "Button clicked: %d times", clickCount);
+}
+
+void Button2Click(nkButton_t *button)
+{
+    printf("Button clicked: %s\n", button->text);
+
+    clickCount--;
+
+    snprintf(labelText, sizeof(labelText), "Button clicked: %d times", clickCount);
+}
 
 
 /* IMPORTANT: ON WEB, MAKE SURE NOTHING IS LOCAL TO THE MAIN FUNCTION AS IT IS TEMPORARY */
@@ -229,26 +256,94 @@ int main()
 
     window.backgroundColor = NK_COLOR_GREEN;
 
-    
     nkDockView_Create(&dockView);
 
     window.rootView = (nkView_t *)&dockView.view; // Set the root view to the dock view
     
     dockView.view.backgroundColor = NK_COLOR_LIGHT_GRAY; // Set the background color of the dock view
+    
+    nkDockView_Create(&topDockView);
+    topDockView.view.backgroundColor = NK_COLOR_WHITE; // Set the background color of the top dock view
+    topDockView.view.sizeRequest = (nkSize_t){0.0f, 50.0f}; // Set the size request for the top dock view
+    topDockView.view.dockPosition = DOCK_POSITION_TOP; // Set the dock position to top
+
+    nkView_AddChildView(&dockView.view, &topDockView.view); // Add the top dock view to the dock view
+
+    nkButton_Create(&button);
+    button.text = "Counter Up!";
+    button.font = &font; // Set the font for the button
+    button.foreground = NK_COLOR_BLACK; // Set the foreground color for the button
+    button.cornerRadius = 5.0f; // Set the corner radius for the button
+    button.background = NK_COLOR_ORANGE; // Set the background color for the button
+    button.view.sizeRequest = (nkSize_t){85.0f, 30.0f}; // Set the size request for the button
+    button.view.dockPosition = DOCK_POSITION_LEFT;
+    button.view.verticalAlignment = ALIGNMENT_MIDDLE; // Set vertical alignment to middle
+
+    button.view.margin = (nkThickness_t){10.0f, 10.0f, 10.0f, 10.0f}; // Set margins for the button
+    button.padding = (nkThickness_t){10.0f, 10.0f, 10.0f, 10.0f}; // Set margins for the button
+
+    button.onClick = (ButtonCallback_t)ButtonClick; // Set the button click callback
+
+    nkView_AddChildView(&topDockView.view, &button.view); // Add the button to the second view
+
+    nkButton_Create(&button2);
+    button2.text = "Counter Down!";
+    button2.font = &font; // Set the font for the button
+    button2.foreground = NK_COLOR_BLACK; // Set the foreground color for the button
+    button2.cornerRadius = 5.0f; // Set the corner radius for the button
+    button2.background = NK_COLOR_ORANGE; // Set the background color for the button
+    button2.view.sizeRequest = (nkSize_t){100.0f, 30.0f}; // Set the size request for the button
+    button2.view.dockPosition = DOCK_POSITION_LEFT;
+    button2.view.verticalAlignment = ALIGNMENT_MIDDLE; // Set vertical alignment to middle
+
+    button2.view.margin = (nkThickness_t){10.0f, 10.0f, 10.0f, 10.0f}; // Set margins for the button
+    button2.padding = (nkThickness_t){10.0f, 10.0f, 10.0f, 10.0f}; // Set margins for the button
+
+    button2.onClick = (ButtonCallback_t)Button2Click; // Set the button click callback
+
+    nkView_AddChildView(&topDockView.view, &button2.view); // Add the button to the second view
+
+    nkLabel_Create(&label);
+    label.text = labelText; // Set the text for the label
+    label.font = &font; // Set the font for the label
+    label.foreground = NK_COLOR_BLACK; // Set the foreground color for the label
+    label.background = NK_COLOR_TRANSPARENT; // Set the background color for the label
+    label.view.sizeRequest = (nkSize_t){200.0f, 18.0f}; // Set the size request for the label
+    label.view.dockPosition = DOCK_POSITION_LEFT; // Set the dock position to right
+
+    label.view.margin = (nkThickness_t){10.0f, 10.0f, 10.0f, 10.0f}; // Set margins for the label
+    label.view.verticalAlignment = ALIGNMENT_MIDDLE; // Set vertical alignment to middle
+
+    nkView_AddChildView(&topDockView.view, &label.view); // Add the label to the top dock view
+
+
+
+    nkView_Create(&topPadding, "Top Padding");
+    topPadding.backgroundColor = NK_COLOR_TRANSPARENT; // Set the background color of the padding
+    topPadding.sizeRequest = (nkSize_t){0.0f, 10.0f}; // Set the size request for the padding
+    topPadding.dockPosition = DOCK_POSITION_TOP; // Set the dock position to top
+    nkView_AddChildView(&topDockView.view, &topPadding); // Add the padding view to the top dock view
 
     #if 0
+    nkView_Create(&thirdView, "Third View");
+    thirdView.backgroundColor = NK_COLOR_TRANSPARENT;
+    thirdView.frame = (nkRect_t){220.0f, 10.0f, 200.0f, 200.0f}; // Set the frame of the third view
+    thirdView.verticalAlignment = ALIGNMENT_MIDDLE; // Set vertical alignment to middle
+    thirdView.dockPosition = DOCK_POSITION_RIGHT; // Set dock position to right
+    
+    nkView_AddChildView(&dockView, &thirdView); // Add the third view to the new root view
+    #endif
 
-     /* create many dockpanel views */
+    /* create many dockpanel views */
     for (int i = 0; i < 10000; i++)
     {
         nkView_t* view = &views[i];
         nkView_Create(view, "DockPanel View");
 
         nkColor_t randomColors[] = {NK_COLOR_RED, NK_COLOR_GREEN, NK_COLOR_BLUE, NK_COLOR_YELLOW, NK_COLOR_CYAN};
-        view->backgroundColor = NK_COLOR_GREEN;//randomColors[rand() % 5];
+        view->backgroundColor = randomColors[rand() % 5];
 
-        view->sizeRequest = (nkSize_t){1.0, 1.0};
-        view->arrangeCallback = NULL;
+        view->sizeRequest = (nkSize_t){0.1, 0.1};
         
         switch (i % 4)
         {
@@ -266,46 +361,13 @@ int main()
                 break;
         }
 
-        view->capturePointerHover = true; // Enable pointer hover capture
-        view->pointerHoverCallback = HoverCallback; // Set the hover callback
-
         nkView_AddChildView(&dockView.view, view);
     }
 
-    size_t lastView = sizeof views / sizeof(views[0]) - 1;
-
-    views[lastView].pointerMovementCallback = PointerMove; // Set the pointer movement callback for the last view
-    views[lastView].capturePointerMovement = true; // Enable pointer movement capture for the last view
-
-    #endif
-
-    nkView_Create(&newRootView, "New Root View");
-    newRootView.backgroundColor = NK_COLOR_GREEN;
-    window.rootView = &newRootView; // Set the root view to the second view
-
-
-
-    nkView_Create(&secondView, "Second View");
-    secondView.backgroundColor = NK_COLOR_BLUE;
-    secondView.frame = (nkRect_t){10.0f, 10.0f, 200.0f, 200.0f}; // Set the frame of the second view
-    secondView.capturePointerHover = true; // Enable pointer hover capture for the second view
-    secondView.pointerHoverCallback = HoverCallback; // Set the hover callback for the second view
-    secondView.capturePointerAction = true; // Enable pointer action capture for the second view
-    secondView.pointerActionCallback = (PointerActionCallback_t)PointerActionCallback; // Set the pointer action callback for the
-
-    printf("Pointer action callback: %p\n", secondView.pointerActionCallback);
-
-    printf("SECOND VIEW: %p\n", &secondView);
-
-    nkView_AddChildView(&newRootView, &secondView); // Add the second view to the new root view
-
-
-    //views[lastView].pointerHoverCallback = HoverCallback; // Set the hover callback for the last view
-    //views[lastView].capturePointerHover = true; // Enable pointer hover capture for the last
 
 
     //nkFont_Load(&font, "build/Roboto-Regular.ttf", 16.0f, atlas_buffer, 512, 512);
-    nkFont_LoadFromMemory(&font, NKFonts_fonts_Roboto_Regular_ttf, NKFonts_fonts_Roboto_Regular_ttf_size, 16.0f, atlas_buffer, 512, 512);
+    nkFont_LoadFromMemory(&font, NKFonts_fonts_Roboto_Regular_ttf, NKFonts_fonts_Roboto_Regular_ttf_size, 20.0f, atlas_buffer, 512, 512);
 
     #if _WIN32
         QueryPerformanceFrequency(&frequency);
