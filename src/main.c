@@ -217,6 +217,9 @@ nkButton_t button2 = {0}; // Button for testing
 
 nkLabel_t label = {0}; // Label for testing
 
+nkView_t labelContainer = {0}; // Container for the label
+nkLabel_t labels[12] = {0}; // Array of labels for testing
+
 char labelText[128] = "Button clicked: 0 times";
 
 static int clickCount = 0;
@@ -261,7 +264,38 @@ int main()
     window.rootView = (nkView_t *)&dockView.view; // Set the root view to the dock view
     
     dockView.view.backgroundColor = NK_COLOR_LIGHT_GRAY; // Set the background color of the dock view
-    
+
+    nkView_Create(&labelContainer, "Label Container");
+    labelContainer.backgroundColor = NK_COLOR_TRANSPARENT; // Set the background color of the label
+    labelContainer.sizeRequest = (nkSize_t){0.0f, 200.0f}; // Set the size request for the label container
+    labelContainer.dockPosition = DOCK_POSITION_TOP; // Set the dock position to right
+
+    nkView_AddChildView(&dockView.view, &labelContainer); // Add the label container to the dock view
+
+    const char *labelsText[12] = {
+        "About this demo:",
+        " - This is a NanoKit demo application",
+        " - It is written entirely in C, using Emscripten for WebAssembly support",
+        " - An identical app builds on Windows with no code changes",
+        " - OpenGL is used for rendering, combined with a custom layout system",
+        " - Below are two buttons and a label that update when clicked",
+        " - Filling the rest of the window is a benchmark test that renders 10,000 views",
+        "   to the window, also laying them out in real-time",
+        " - Layout is achieved with a Dock View API",
+        NULL
+    };
+
+    for (int i = 0; labelsText[i] != NULL; i++)
+    {
+        nkLabel_Create(&labels[i]);
+        labels[i].text = labelsText[i];
+        labels[i].font = &font; // Set the font for the label
+        labels[i].foreground = NK_COLOR_BLACK; // Set the foreground color for the label
+        labels[i].view.sizeRequest = (nkSize_t){200.0f, 18.0f}; // Set the size request for the label
+        labels[i].view.frame = (nkRect_t){10.0f, 10.0f + i * 20.0f, 200.0f, 18.0f}; // Set the frame of the label
+        nkView_AddChildView(&labelContainer, &labels[i].view); // Add the label to the top dock view
+    }
+
     nkDockView_Create(&topDockView);
     topDockView.view.backgroundColor = NK_COLOR_WHITE; // Set the background color of the top dock view
     topDockView.view.sizeRequest = (nkSize_t){0.0f, 50.0f}; // Set the size request for the top dock view
@@ -275,7 +309,7 @@ int main()
     button.foreground = NK_COLOR_BLACK; // Set the foreground color for the button
     button.cornerRadius = 5.0f; // Set the corner radius for the button
     button.background = NK_COLOR_ORANGE; // Set the background color for the button
-    button.view.sizeRequest = (nkSize_t){85.0f, 30.0f}; // Set the size request for the button
+    button.view.sizeRequest = (nkSize_t){100.0f, 30.0f}; // Set the size request for the button
     button.view.dockPosition = DOCK_POSITION_LEFT;
     button.view.verticalAlignment = ALIGNMENT_MIDDLE; // Set vertical alignment to middle
 
@@ -292,7 +326,7 @@ int main()
     button2.foreground = NK_COLOR_BLACK; // Set the foreground color for the button
     button2.cornerRadius = 5.0f; // Set the corner radius for the button
     button2.background = NK_COLOR_ORANGE; // Set the background color for the button
-    button2.view.sizeRequest = (nkSize_t){100.0f, 30.0f}; // Set the size request for the button
+    button2.view.sizeRequest = (nkSize_t){120.0f, 30.0f}; // Set the size request for the button
     button2.view.dockPosition = DOCK_POSITION_LEFT;
     button2.view.verticalAlignment = ALIGNMENT_MIDDLE; // Set vertical alignment to middle
 
@@ -302,6 +336,8 @@ int main()
     button2.onClick = (ButtonCallback_t)Button2Click; // Set the button click callback
 
     nkView_AddChildView(&topDockView.view, &button2.view); // Add the button to the second view
+
+    
 
     nkLabel_Create(&label);
     label.text = labelText; // Set the text for the label
