@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 
-void ButtonClick()
+void ButtonClick(nkButton_t *button)
 {
     printf("Button clicked\n");
 }

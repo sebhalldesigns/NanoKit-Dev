@@ -1,6 +1,6 @@
 <Window Title="Window Generated From XML" Height="400" Width="1000">
     <DockPanel Name="DockPanel">
-        <Button Name="MyButton" DockPanel.Dock="Top" Height="100" Content="Top" Background="Orange" Click="TopClickFunction">
+        <Button Name="MyButton" DockPanel.Dock="Top" Height="100" Background="Orange" Click="TopClickFunction">
             Top Button
         </Button>
 

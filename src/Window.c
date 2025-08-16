@@ -2,22 +2,22 @@
 
 #include <stdio.h>
 
-void TopClickFunction()
+void TopClickFunction(nkButton_t *button)
 {
     printf("Top Button clicked\n");
 }
 
-void LeftClickFunction()
+void LeftClickFunction(nkButton_t *button)
 {
     printf("Left Button clicked\n");
 }
 
-void BottomClickFunction()
+void BottomClickFunction(nkButton_t *button)
 {
     printf("Bottom Button clicked\n");
 }
 
-void RightClickFunction()
+void RightClickFunction(nkButton_t *button)
 {
     printf("Right Button clicked\n");
 }
