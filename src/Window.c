@@ -2,7 +2,22 @@
 
 #include <stdio.h>
 
-void ButtonClickFunction()
+void TopClickFunction()
 {
-    printf("Button clicked\n");
+    printf("Top Button clicked\n");
+}
+
+void LeftClickFunction()
+{
+    printf("Left Button clicked\n");
+}
+
+void BottomClickFunction()
+{
+    printf("Bottom Button clicked\n");
+}
+
+void RightClickFunction()
+{
+    printf("Right Button clicked\n");
 }

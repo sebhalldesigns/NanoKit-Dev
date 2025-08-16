@@ -8,6 +8,9 @@
 #include <views/nkbutton/nkbutton.h>
 #include <views/nklabel/nklabel.h>
 
+#include <Window.xml.h>
+#include <SecondWindow.xml.h>
+
 static uint8_t atlas_buffer[512 * 512];
 static nkFont_t font;
 
@@ -251,6 +254,7 @@ int main()
     printf("Hello, NanoKit!\n");
 
 
+    #if 0
     window.resizeCallback = (nkWindowResizeCallback_t)WindowResizeCallback;
     window.codepointInputCallback = (nkWindowCodepointInputCallback_t)WindowCodepointInputCallback;
     window.drawCallback = (nkWindowDrawCallback_t)WindowDrawCallback;
@@ -409,10 +413,33 @@ int main()
         QueryPerformanceFrequency(&frequency);
     #endif
 
+    #endif
+
+
+    static Window_t generatedWindow = {0}; // Static instance of Window_t
+    Window_Create(&generatedWindow);
+    generatedWindow.super.backgroundColor = NK_COLOR_LIGHT_GRAY; // Set the background color for the window
+
+    nkFont_LoadFromMemory(&font, NKFonts_fonts_Roboto_Regular_ttf, NKFonts_fonts_Roboto_Regular_ttf_size, 20.0f, atlas_buffer, 512, 512);
+
+    generatedWindow.MyButton.font = &font; // Set the font for the button
+
+    generatedWindow.super.resizeCallback = (nkWindowResizeCallback_t)WindowResizeCallback;
+    generatedWindow.super.codepointInputCallback = (nkWindowCodepointInputCallback_t)WindowCodepointInputCallback;
+    generatedWindow.super.drawCallback = (nkWindowDrawCallback_t)WindowDrawCallback;
+    generatedWindow.super.pointerMoveCallback = (nkWindowPointerMoveCallback_t)PointerMoveCallback;
+
+    //static SecondWindow_t secondGeneratedWindow;    
+    //SecondWindow_Create(&secondGeneratedWindow);
+    
+
+
     while (nkWindow_PollEvents())
     {
         //nkWindow_RequestRedraw(&window); // Request a redraw for the window
     }
+
+    printf("Exiting NanoKit application.\n");
 
     return 0;
 }

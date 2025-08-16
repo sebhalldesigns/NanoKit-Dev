@@ -39,7 +39,7 @@ target_include_directories(${EXE_NAME} PUBLIC
 
 )
 
-#generate_modules(NanoKit-Dev
-#    src/SecondWindow
-#    src/Window   
-#)
+generate_modules(NanoKit-Dev
+    src/SecondWindow
+    src/Window   
+)
